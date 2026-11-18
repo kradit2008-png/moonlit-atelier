@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Moonlit Atelier",
+  "short_name": "Moonlit",
+  "description": "Browse anime series and find legal viewing availability.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10101e",
+  "theme_color": "#17172d",
+  "icons": [
+    {
+      "src": "./anime-planet-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17172d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./anime-planet-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./anime-planet-icon.svg" />
+  <meta name="description" content="Moonlit Atelier — browse anime series and find legal viewing availability." />
+  <title>Moonlit Atelier</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Segoe UI", sans-serif;
+      background: #10101e;
+      color: #f7f3ff;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 0;
+      min-height: 100svh;
+      margin: 0;
+      overflow-x: hidden;
+      background: #10101e;
+    }
+
+    .scene-background {
+      position: fixed;
+      z-index: 0;
+      inset: -2%;
+      background: url("anime-girl-reference.png") center / cover no-repeat;
+      will-change: transform;
+      animation: gentle-drift 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes gentle-drift {
+      from { transform: scale(1.02) translate3d(-.35%, .25%, 0); }
+      to { transform: scale(1.07) translate3d(.35%, -.25%, 0); }
+    }
+
+    body::before {
+      position: fixed;
+      z-index: 2;
+      inset: 0;
+      content: "";
+      background: linear-gradient(90deg, #ffffff35 0%, #ffffff20 38%, #10101e24 58%, #10101e80 100%);
+      pointer-events: none;
+    }
+
+    .page {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: 0 clamp(16px, 7vw, 100px);
+      justify-items: end;
+    }
+
+    .form-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      width: min(520px, 100%);
+      min-width: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: clamp(28px, 4vw, 52px);
+      background: transparent;
+      text-shadow: 0 2px 8px #080717aa;
+    }
+
+    .brand {
+      margin-bottom: 28px;
+      color: #f3d9ff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(32px, 4vw, 43px);
+      letter-spacing: -.04em;
+    }
+
+    .intro {
+      margin: 0 0 22px;
+      color: #bcb8ce;
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin: 0 0 9px;
+      color: #e8e4f2;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      min-height: 52px;
+      margin-bottom: 16px;
+      padding: 0 15px;
+      border: 1px solid #ffffff24;
+      border-radius: 12px;
+      outline: none;
+      background: #ffffff09;
+      color: #fff;
+      font: inherit;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    input::placeholder { color: #8e8aa2; }
+    input:focus {
+      border-color: #d7a8ff;
+      box-shadow: 0 0 0 3px #c88dff26;
+    }
+
+    .options {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: -2px 0 25px;
+      color: #c9c4d7;
+      font-size: 13px;
+    }
+
+    .remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .remember input { width: 15px; min-height: 15px; margin: 0; accent-color: #d59cff; }
+
+    a { color: #e2b9ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    button {
+      width: 100%;
+      min-height: 53px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(100deg, #d68de9, #9e9cf4);
+      color: #21172e;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 750;
+      box-shadow: 0 9px 24px #b37be733;
+      transition: transform .2s, filter .2s;
+    }
+    button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    button:focus-visible, a:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+    .demo-note {
+      min-height: 0;
+      margin: 10px 0 0;
+      color: #aaa5bd;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .planet-panel {
+      margin-top: 22px;
+      padding: 18px 18px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      background: rgba(19, 18, 37, 0.64);
+      box-shadow: 0 18px 40px rgba(14, 10, 25, 0.28);
+      backdrop-filter: blur(8px);
+    }
+
+    .planet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .planet-header h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .planet-badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(214, 141, 233, 0.15);
+      color: #f1d1ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .free-watch-link {
+      display: block;
+      margin: 0 0 18px;
+      padding: 13px 16px;
+      border: 1px solid rgba(214, 141, 233, 0.45);
+      border-radius: 12px;
+      background: rgba(214, 141, 233, 0.14);
+      color: #f1d1ff;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .free-watch-link:hover {
+      background: rgba(214, 141, 233, 0.24);
+      text-decoration: none;
+    }
+
+    .availability-note {
+      margin: -8px 0 18px;
+      color: #c9c4d7;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .anime-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: 8px 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .anime-list li {
+      min-width: 0;
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+
+    .anime-list li:hover {
+      background: rgba(214, 141, 233, 0.12);
+      border-color: rgba(214, 141, 233, 0.45);
+    }
+
+    .anime-list a {
+      color: #ebebff;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .anime-links {
+      display: grid;
+      min-width: 0;
+      gap: 8px;
+    }
+
+    .anime-links > a {
+      overflow-wrap: anywhere;
+    }
+
+    .anime-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .anime-links .action-link {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border: 1px solid rgba(214, 141, 233, 0.36);
+      border-radius: 999px;
+      color: #f1d1ff;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .anime-links .download-link {
+      border-color: rgba(165, 180, 252, 0.4);
+      color: #c7d2fe;
+    }
+
+    .anime-links a:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .status {
+      min-height: 22px;
+      margin: 7px 0 0;
+      color: #d9c2ff;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .install-button {
+      width: auto;
+      min-height: 42px;
+      margin: 0 0 18px;
+      padding: 0 16px;
+      border: 1px solid rgba(214, 141, 233, 0.45);
+      background: rgba(30, 25, 50, 0.78);
+      color: #f1d1ff;
+      box-shadow: none;
+    }
+
+    .install-help {
+      margin: -10px 0 18px;
+      color: #c9c4d7;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 760px) {
+      body::before { background: linear-gradient(180deg, #ffffff24 0%, #ffffff12 30%, #10101e66 62%, #10101ecc 100%); }
+      .page { justify-items: center; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
+      .form-panel {
+        width: min(100%, 480px);
+        min-height: auto;
+        padding: clamp(20px, 5vw, 32px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 22px;
+        background: rgba(16, 16, 30, 0.82);
+        box-shadow: 0 20px 60px rgba(8, 7, 23, 0.35);
+        backdrop-filter: blur(14px);
+      }
+      .brand { margin-bottom: 24px; }
+      .intro { margin-bottom: 24px; }
+      input { margin-bottom: 16px; }
+      .options { margin-bottom: 20px; }
+    }
+
+    @media (max-width: 520px) {
+      .anime-list {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .planet-panel {
+        padding: 14px 12px 12px;
+      }
+
+      .planet-header {
+        align-items: flex-start;
+      }
+
+      .anime-links {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 360px) {
+      .options {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .free-watch-link {
+        padding: 12px;
+        font-size: 13px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene-background { animation: none; }
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene-background" aria-hidden="true"></div>
+  <main class="page">
+    <section class="form-panel" aria-labelledby="page-title">
+      <button id="install-button" class="install-button" type="button">Install app</button>
+      <p id="install-help" class="install-help" aria-live="polite">Install on mobile or laptop from your browser menu. This page must be hosted online using HTTPS.</p>
+      <div id="login-screen">
+        <div class="brand">✦ Moonlit Atelier</div>
+        <h1 id="page-title">Welcome back</h1>
+        <p class="intro">Step into a little world of art, stories, and starlight.</p>
+        <form id="demo-form">
+          <label for="email">Email address</label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="off" value="xyz@gmail.com" />
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Enter a demo password" autocomplete="off" value="12345" />
+          <div class="options">
+            <label class="remember"><input type="checkbox" /> Remember me</label>
+            <a href="#" id="forgot-link">Forgot password?</a>
+          </div>
+          <button type="submit">Sign in</button>
+          <p class="status" id="status" aria-live="polite">Demo credentials ready: xyz@gmail.com / 12345</p>
+        </form>
+        <p class="demo-note">Visual demo only. This page does not authenticate, send, or save anything you type. Demo account: xyz@gmail.com / 12345.</p>
+      </div>
+
+      <div id="planet-screen" class="hidden" aria-live="polite">
+        <div class="brand">✦ Moonlit Atelier</div>
+        <h1>Anime Planet</h1>
+        <p class="intro">Welcome back! Your anime library is ready below.</p>
+        <a
+          class="free-watch-link"
+          href="https://www.anime-planet.com/anime/watch-online/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Browse free-to-watch anime on Anime-Planet</a>
+        <p class="availability-note">Free viewing availability depends on the series, streaming partner, and your region. Some titles may require a subscription.</p>
+        <section class="planet-panel" aria-label="Anime Planet list">
+          <div class="planet-header">
+            <h2>All series</h2>
+            <span class="planet-badge">Popular</span>
+          </div>
+          <ul class="anime-list">
+            <li>One Piece</li>
+            <li>Attack on Titan</li>
+            <li>Demon Slayer</li>
+            <li>My Hero Academia</li>
+            <li>Jujutsu Kaisen</li>
+            <li>Fullmetal Alchemist</li>
+            <li>Bleach</li>
+            <li>Dragon Ball Z</li>
+            <li>Spy x Family</li>
+            <li>Frieren</li>
+            <li>Hunter x Hunter</li>
+            <li>Death Note</li>
+            <li>Haikyuu!!</li>
+            <li>Cowboy Bebop</li>
+            <li>Naruto</li>
+            <li>Black Clover</li>
+            <li>One Punch Man</li>
+            <li>The Promised Neverland</li>
+            <li>Blue Lock</li>
+            <li>Solo Leveling</li>
+            <li>Chainsaw Man</li>
+            <li>Mob Psycho 100</li>
+            <li>Vinland Saga</li>
+            <li>Tokyo Ghoul</li>
+            <li>Your Name</li>
+          </ul>
+        </section>
+        <button id="logout-button" type="button" style="margin-top: 18px;">Log out</button>
+      </div>
+    </section>
+  </main>
+  <script>
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const statusEl = document.getElementById("status");
+    const loginScreen = document.getElementById("login-screen");
+    const planetScreen = document.getElementById("planet-screen");
+    const demoForm = document.getElementById("demo-form");
+    const installButton = document.getElementById("install-button");
+    const installHelp = document.getElementById("install-help");
+    let deferredInstallPrompt = null;
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      installHelp.textContent = "Ready to install on this device.";
+    });
+
+    installButton.addEventListener("click", async () => {
+      if (!window.isSecureContext || !("serviceWorker" in navigator)) {
+        installHelp.textContent = "To install, host this page on an HTTPS website first; opening the HTML file directly does not support installation.";
+        return;
+      }
+
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        installHelp.textContent = choice.outcome === "accepted"
+          ? "Install started. Follow your browser's instructions."
+          : "Installation was canceled. You can try again from your browser menu.";
+        deferredInstallPrompt = null;
+        return;
+      }
+
+      installHelp.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
+        ? "On iPhone or iPad: tap Share, then choose Add to Home Screen."
+        : "Open your browser's menu and choose Install app or Add to Home screen. If that option is missing, install requires an HTTPS-hosted page.";
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installHelp.textContent = "App installed successfully.";
+      deferredInstallPrompt = null;
+    });
+
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+        console.error("Could not register the app service worker.", error);
+        installHelp.textContent = "Offline support could not start. Check the hosted service-worker.js file and try again.";
+      });
+    }
+
+    document.querySelectorAll(".anime-list li").forEach((item) => {
+      const title = item.textContent.trim();
+      const links = document.createElement("div");
+      links.className = "anime-links";
+
+      const detailsLink = document.createElement("a");
+      detailsLink.href = `https://www.anime-planet.com/anime/all?name=${encodeURIComponent(title)}`;
+      detailsLink.target = "_blank";
+      detailsLink.rel = "noopener noreferrer";
+      detailsLink.textContent = title;
+
+      const actions = document.createElement("div");
+      actions.className = "anime-actions";
+
+      const watchLink = document.createElement("a");
+      watchLink.className = "action-link watch-link";
+      watchLink.href = `https://www.justwatch.com/us/search?q=${encodeURIComponent(title)}`;
+      watchLink.target = "_blank";
+      watchLink.rel = "noopener noreferrer";
+      watchLink.textContent = "Watch";
+      watchLink.setAttribute("aria-label", `Find where to legally watch ${title}`);
+
+      const downloadLink = document.createElement("a");
+      downloadLink.className = "action-link download-link";
+      downloadLink.href = `https://www.justwatch.com/us/search?q=${encodeURIComponent(title)}`;
+      downloadLink.target = "_blank";
+      downloadLink.rel = "noopener noreferrer";
+      downloadLink.textContent = "Download";
+      downloadLink.setAttribute(
+        "aria-label",
+        `Find legal purchase and offline-viewing options for ${title}`
+      );
+
+      actions.append(watchLink, downloadLink);
+      links.append(detailsLink, actions);
+      item.replaceChildren(links);
+    });
+
+    emailInput.value = "xyz@gmail.com";
+    passwordInput.value = "12345";
+
+    demoForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (email === "xyz@gmail.com" && password === "12345") {
+        loginScreen.classList.add("hidden");
+        planetScreen.classList.remove("hidden");
+        statusEl.textContent = "Demo login successful. Email: xyz@gmail.com";
+        return;
+      }
+
+      statusEl.textContent = "Demo preview only — no sign-in was attempted.";
+    });
+
+    document.getElementById("forgot-link").addEventListener("click", (event) => {
+      event.preventDefault();
+      statusEl.textContent = "Password recovery is not available in this visual demo.";
+    });
+
+    document.getElementById("logout-button").addEventListener("click", () => {
+      planetScreen.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+      statusEl.textContent = "Logged out. Demo credentials ready: xyz@gmail.com / 12345";
+    });
+  </script>
+</body>
+</html>
