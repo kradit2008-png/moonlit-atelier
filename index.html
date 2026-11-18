@@ -468,6 +468,20 @@
     const installHelp = document.getElementById("install-help");
     let deferredInstallPrompt = null;
 
+    function showScreen(screen) {
+      const showAnime = screen === "anime";
+      loginScreen.classList.toggle("hidden", showAnime);
+      planetScreen.classList.toggle("hidden", !showAnime);
+    }
+
+    window.addEventListener("popstate", (event) => {
+      showScreen(
+        event.state && event.state.moonlitAtelierScreen === "anime"
+          ? "anime"
+          : "login"
+      );
+    });
+
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
@@ -582,8 +596,8 @@
       const password = passwordInput.value.trim();
 
       if (email === "xyz@gmail.com" && password === "12345") {
-        loginScreen.classList.add("hidden");
-        planetScreen.classList.remove("hidden");
+        history.pushState({ moonlitAtelierScreen: "anime" }, "", location.href);
+        showScreen("anime");
         statusEl.textContent = "Demo login successful. Email: xyz@gmail.com";
         return;
       }
@@ -597,8 +611,8 @@
     });
 
     document.getElementById("logout-button").addEventListener("click", () => {
-      planetScreen.classList.add("hidden");
-      loginScreen.classList.remove("hidden");
+      history.replaceState({ moonlitAtelierScreen: "login" }, "", location.href);
+      showScreen("login");
       statusEl.textContent = "Logged out. Demo credentials ready: xyz@gmail.com / 12345";
     });
   </script>
