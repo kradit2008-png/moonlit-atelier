@@ -208,28 +208,10 @@
       text-transform: uppercase;
     }
 
-    .free-watch-link {
-      display: block;
-      margin: 0 0 18px;
-      padding: 13px 16px;
-      border: 1px solid rgba(214, 141, 233, 0.45);
-      border-radius: 12px;
-      background: rgba(214, 141, 233, 0.14);
-      color: #f1d1ff;
-      font-size: 14px;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .free-watch-link:hover {
-      background: rgba(214, 141, 233, 0.24);
-      text-decoration: none;
-    }
-
-    .availability-note {
-      margin: -8px 0 18px;
+    .anime-detail-note {
+      margin: 12px 0 20px;
       color: #c9c4d7;
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.5;
     }
 
@@ -262,39 +244,7 @@
       font-weight: 500;
     }
 
-    .anime-links {
-      display: grid;
-      min-width: 0;
-      gap: 8px;
-    }
-
-    .anime-links > a {
-      overflow-wrap: anywhere;
-    }
-
-    .anime-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .anime-links .action-link {
-      flex: 0 0 auto;
-      padding: 5px 8px;
-      border: 1px solid rgba(214, 141, 233, 0.36);
-      border-radius: 999px;
-      color: #f1d1ff;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .anime-links .download-link {
-      border-color: rgba(165, 180, 252, 0.4);
-      color: #c7d2fe;
-    }
-
-    .anime-links a:focus-visible {
+    .anime-list a:focus-visible {
       outline: 3px solid #fff;
       outline-offset: 2px;
     }
@@ -361,9 +311,6 @@
         align-items: flex-start;
       }
 
-      .anime-links {
-        grid-template-columns: minmax(0, 1fr);
-      }
     }
 
     @media (max-width: 360px) {
@@ -372,10 +319,6 @@
         flex-direction: column;
       }
 
-      .free-watch-link {
-        padding: 12px;
-        font-size: 13px;
-      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -412,14 +355,7 @@
       <div id="planet-screen" class="hidden" aria-live="polite">
         <div class="brand">✦ Moonlit Atelier</div>
         <h1>Anime Planet</h1>
-        <p class="intro">Welcome back! Your anime library is ready below.</p>
-        <a
-          class="free-watch-link"
-          href="https://www.anime-planet.com/anime/watch-online/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >Browse free-to-watch anime on Anime-Planet</a>
-        <p class="availability-note">Free viewing availability depends on the series, streaming partner, and your region. Some titles may require a subscription.</p>
+        <p class="intro">Choose a series to open its page here in Moonlit Atelier.</p>
         <section class="planet-panel" aria-label="Anime Planet list">
           <div class="planet-header">
             <h2>All series</h2>
@@ -455,6 +391,13 @@
         </section>
         <button id="logout-button" type="button" style="margin-top: 18px;">Log out</button>
       </div>
+
+      <div id="anime-detail-screen" class="hidden" aria-live="polite">
+        <div class="brand">✦ Moonlit Atelier</div>
+        <h1 id="anime-detail-title"></h1>
+        <p class="anime-detail-note">This series is listed in Moonlit Atelier. Episodes are not hosted on this page.</p>
+        <button id="back-to-series" type="button">Back to all series</button>
+      </div>
     </section>
   </main>
   <script>
@@ -463,22 +406,27 @@
     const statusEl = document.getElementById("status");
     const loginScreen = document.getElementById("login-screen");
     const planetScreen = document.getElementById("planet-screen");
+    const animeDetailScreen = document.getElementById("anime-detail-screen");
+    const animeDetailTitle = document.getElementById("anime-detail-title");
     const demoForm = document.getElementById("demo-form");
     const installButton = document.getElementById("install-button");
     const installHelp = document.getElementById("install-help");
     let deferredInstallPrompt = null;
 
-    function showScreen(screen) {
-      const showAnime = screen === "anime";
-      loginScreen.classList.toggle("hidden", showAnime);
-      planetScreen.classList.toggle("hidden", !showAnime);
+    function showScreen(screen, title = "") {
+      loginScreen.classList.toggle("hidden", screen !== "login");
+      planetScreen.classList.toggle("hidden", screen !== "anime");
+      animeDetailScreen.classList.toggle("hidden", screen !== "detail");
+      if (screen === "detail") animeDetailTitle.textContent = title;
     }
 
     window.addEventListener("popstate", (event) => {
+      const state = event.state;
       showScreen(
-        event.state && event.state.moonlitAtelierScreen === "anime"
-          ? "anime"
-          : "login"
+        state && state.moonlitAtelierScreen
+          ? state.moonlitAtelierScreen
+          : "login",
+        state && state.animeTitle ? state.animeTitle : ""
       );
     });
 
@@ -550,40 +498,19 @@
 
     document.querySelectorAll(".anime-list li").forEach((item) => {
       const title = item.textContent.trim();
-      const links = document.createElement("div");
-      links.className = "anime-links";
-
-      const detailsLink = document.createElement("a");
-      detailsLink.href = `https://www.anime-planet.com/anime/all?name=${encodeURIComponent(title)}`;
-      detailsLink.target = "_blank";
-      detailsLink.rel = "noopener noreferrer";
-      detailsLink.textContent = title;
-
-      const actions = document.createElement("div");
-      actions.className = "anime-actions";
-
-      const watchLink = document.createElement("a");
-      watchLink.className = "action-link watch-link";
-      watchLink.href = `https://www.justwatch.com/us/search?q=${encodeURIComponent(title)}`;
-      watchLink.target = "_blank";
-      watchLink.rel = "noopener noreferrer";
-      watchLink.textContent = "Watch";
-      watchLink.setAttribute("aria-label", `Find where to legally watch ${title}`);
-
-      const downloadLink = document.createElement("a");
-      downloadLink.className = "action-link download-link";
-      downloadLink.href = `https://www.justwatch.com/us/search?q=${encodeURIComponent(title)}`;
-      downloadLink.target = "_blank";
-      downloadLink.rel = "noopener noreferrer";
-      downloadLink.textContent = "Download";
-      downloadLink.setAttribute(
-        "aria-label",
-        `Find legal purchase and offline-viewing options for ${title}`
-      );
-
-      actions.append(watchLink, downloadLink);
-      links.append(detailsLink, actions);
-      item.replaceChildren(links);
+      const detailLink = document.createElement("a");
+      detailLink.href = "#anime";
+      detailLink.textContent = title;
+      detailLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        history.pushState(
+          { moonlitAtelierScreen: "detail", animeTitle: title },
+          "",
+          location.href
+        );
+        showScreen("detail", title);
+      });
+      item.replaceChildren(detailLink);
     });
 
     emailInput.value = "xyz@gmail.com";
@@ -596,7 +523,11 @@
       const password = passwordInput.value.trim();
 
       if (email === "xyz@gmail.com" && password === "12345") {
-        history.pushState({ moonlitAtelierScreen: "anime" }, "", location.href);
+        history.pushState(
+          { moonlitAtelierScreen: "anime" },
+          "",
+          location.href
+        );
         showScreen("anime");
         statusEl.textContent = "Demo login successful. Email: xyz@gmail.com";
         return;
@@ -614,6 +545,10 @@
       history.replaceState({ moonlitAtelierScreen: "login" }, "", location.href);
       showScreen("login");
       statusEl.textContent = "Logged out. Demo credentials ready: xyz@gmail.com / 12345";
+    });
+
+    document.getElementById("back-to-series").addEventListener("click", () => {
+      history.back();
     });
   </script>
 </body>
