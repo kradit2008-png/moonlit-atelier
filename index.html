@@ -215,6 +215,43 @@
       line-height: 1.5;
     }
 
+    .episode-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .episode-button {
+      min-height: 48px;
+      padding: 10px 14px;
+      border: 1px solid rgba(214, 141, 233, 0.36);
+      background: rgba(30, 25, 50, 0.78);
+      color: #f1d1ff;
+      box-shadow: none;
+    }
+
+    .episode-player {
+      display: block;
+      width: 100%;
+      max-height: 70vh;
+      margin: 18px 0;
+      border-radius: 14px;
+      background: #05050a;
+    }
+
+    .episode-file {
+      display: block;
+      width: 100%;
+      margin: 12px 0 18px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #f7f3ff;
+      font: inherit;
+    }
+
     .anime-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
@@ -470,8 +507,20 @@
       <div id="anime-detail-screen" class="hidden" aria-live="polite">
         <div class="brand">✦ Moonlit Atelier</div>
         <h1 id="anime-detail-title"></h1>
-        <p class="anime-detail-note">This series is listed in Moonlit Atelier. Episodes are not hosted on this page.</p>
+        <p class="anime-detail-note">Choose an episode to open its video player. Numbered entries are slots; episode names and videos must be added by the site owner.</p>
+        <section class="episode-list" id="episode-list" aria-label="Episodes"></section>
         <button id="back-to-series" type="button">Back to all series</button>
+      </div>
+
+      <div id="episode-player-screen" class="hidden" aria-live="polite">
+        <div class="brand">✦ Moonlit Atelier</div>
+        <h1 id="episode-player-title"></h1>
+        <p id="episode-player-status" class="anime-detail-note" role="status">Loading episode video…</p>
+        <video id="episode-player" class="episode-player" controls playsinline preload="metadata"></video>
+        <label for="episode-file" class="anime-detail-note">Or choose a video file from this device:</label>
+        <input id="episode-file" class="episode-file" type="file" accept="video/*" />
+        <p class="anime-detail-note">Device-selected files play only in this browser and are not uploaded or shared. To make an episode available to everyone, add a video you have rights to distribute in the site's <code>videos</code> folder.</p>
+        <button id="back-to-episodes" type="button">Back to episodes</button>
       </div>
     </section>
   </main>
@@ -483,17 +532,95 @@
     const planetScreen = document.getElementById("planet-screen");
     const animeDetailScreen = document.getElementById("anime-detail-screen");
     const animeDetailTitle = document.getElementById("anime-detail-title");
+    const episodePlayerScreen = document.getElementById("episode-player-screen");
+    const episodePlayer = document.getElementById("episode-player");
+    const episodePlayerTitle = document.getElementById("episode-player-title");
+    const episodePlayerStatus = document.getElementById("episode-player-status");
+    const episodeFileInput = document.getElementById("episode-file");
+    const episodeList = document.getElementById("episode-list");
     const demoForm = document.getElementById("demo-form");
     const installButton = document.getElementById("install-button");
     const installHelp = document.getElementById("install-help");
     let deferredInstallPrompt = null;
+    let localVideoObjectUrl = null;
 
-    function showScreen(screen, title = "") {
+    function showScreen(screen, title = "", episodeNumber = 1) {
       loginScreen.classList.toggle("hidden", screen !== "login");
       planetScreen.classList.toggle("hidden", screen !== "anime");
       animeDetailScreen.classList.toggle("hidden", screen !== "detail");
-      if (screen === "detail") animeDetailTitle.textContent = title;
+      episodePlayerScreen.classList.toggle("hidden", screen !== "player");
+      if (screen === "detail") {
+        animeDetailTitle.textContent = title;
+        renderEpisodeList(title);
+      }
+      if (screen === "player") openEpisode(title, episodeNumber);
     }
+
+    function renderEpisodeList(title) {
+      episodeList.replaceChildren();
+      for (let episodeNumber = 1; episodeNumber <= 12; episodeNumber += 1) {
+        const button = document.createElement("button");
+        button.className = "episode-button";
+        button.type = "button";
+        button.textContent = `Episode ${episodeNumber}`;
+        button.addEventListener("click", () => {
+          history.pushState(
+            {
+              moonlitAtelierScreen: "player",
+              animeTitle: title,
+              episodeNumber,
+            },
+            "",
+            location.href
+          );
+          showScreen("player", title, episodeNumber);
+        });
+        episodeList.append(button);
+      }
+    }
+
+    function openEpisode(title, episodeNumber) {
+      if (localVideoObjectUrl) {
+        URL.revokeObjectURL(localVideoObjectUrl);
+        localVideoObjectUrl = null;
+      }
+      episodeFileInput.value = "";
+      episodePlayerTitle.textContent = `${title} — Episode ${episodeNumber}`;
+      episodePlayerStatus.textContent = "Loading episode video…";
+      const fileSlug = title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      episodePlayer.src = `./videos/${fileSlug}-episode-${String(episodeNumber).padStart(2, "0")}.mp4`;
+      episodePlayer.load();
+    }
+
+    episodePlayer.addEventListener("loadedmetadata", () => {
+      episodePlayerStatus.textContent = "Video ready. Press Play to watch and listen.";
+    });
+
+    episodePlayer.addEventListener("error", () => {
+      if (localVideoObjectUrl) return;
+      episodePlayerStatus.textContent = "This episode's video has not been added yet. Add the matching MP4 to the site's videos folder or choose a file from this device below.";
+    });
+
+    episodeFileInput.addEventListener("change", () => {
+      const file = episodeFileInput.files && episodeFileInput.files[0];
+      if (!file) return;
+      if (localVideoObjectUrl) URL.revokeObjectURL(localVideoObjectUrl);
+      localVideoObjectUrl = URL.createObjectURL(file);
+      episodePlayerStatus.textContent = `Ready to play ${file.name}. This file stays on this device.`;
+      episodePlayer.src = localVideoObjectUrl;
+      episodePlayer.load();
+    });
+
+    episodePlayer.addEventListener("loadeddata", () => {
+      episodePlayer.play().catch((error) => {
+        if (error.name !== "NotAllowedError" && error.name !== "AbortError") {
+          console.error("Could not start episode playback.", error);
+          episodePlayerStatus.textContent = "Playback could not start. Press Play on the video controls to try again.";
+        }
+      });
+    });
 
     window.addEventListener("popstate", (event) => {
       const state = event.state;
@@ -501,7 +628,8 @@
         state && state.moonlitAtelierScreen
           ? state.moonlitAtelierScreen
           : "login",
-        state && state.animeTitle ? state.animeTitle : ""
+        state && state.animeTitle ? state.animeTitle : "",
+        state && state.episodeNumber ? state.episodeNumber : 1
       );
     });
 
@@ -623,6 +751,10 @@
     });
 
     document.getElementById("back-to-series").addEventListener("click", () => {
+      history.back();
+    });
+
+    document.getElementById("back-to-episodes").addEventListener("click", () => {
       history.back();
     });
   </script>
