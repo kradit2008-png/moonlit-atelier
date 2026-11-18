@@ -21,7 +21,7 @@ The first local commit is already created. For later updates, run `git add .`, `
 
 ## Add episode videos
 
-The episode player supports MP4 files that you own or have permission to distribute. Each series page shows 12 numbered slots; these are placeholders, not verified episode names. Add a `videos` folder beside `index.html`, then name each file using the series slug and two-digit episode number, for example:
+The episode player supports MP4 files that you own or have permission to distribute. Solo Leveling Season 1 has its 12 episode titles listed; other series currently show numbered slots without verified names. Add a `videos` folder beside `index.html`, then name each file using the series slug and two-digit episode number, for example:
 
 ```text
 videos/one-piece-episode-01.mp4

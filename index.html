@@ -507,7 +507,7 @@
       <div id="anime-detail-screen" class="hidden" aria-live="polite">
         <div class="brand">✦ Moonlit Atelier</div>
         <h1 id="anime-detail-title"></h1>
-        <p class="anime-detail-note">Choose an episode to open its video player. Numbered entries are slots; episode names and videos must be added by the site owner.</p>
+        <p class="anime-detail-note">Choose an episode to open its video player. Solo Leveling Season 1 shows episode titles; other series currently use numbered slots.</p>
         <section class="episode-list" id="episode-list" aria-label="Episodes"></section>
         <button id="back-to-series" type="button">Back to all series</button>
       </div>
@@ -543,8 +543,22 @@
     const installHelp = document.getElementById("install-help");
     let deferredInstallPrompt = null;
     let localVideoObjectUrl = null;
+    const soloLevelingEpisodeTitles = [
+      "I'm Used to It",
+      "If I Had One More Chance",
+      "It's Like a Game",
+      "I've Gotta Get Stronger",
+      "A Pretty Good Deal",
+      "The Real Hunt Begins",
+      "Let's See How Far I Can Go",
+      "This Is Frustrating",
+      "You've Been Hiding Your Skills",
+      "What Is This, a Picnic?",
+      "A Knight Who Defends an Empty Throne",
+      "Arise",
+    ];
 
-    function showScreen(screen, title = "", episodeNumber = 1) {
+    function showScreen(screen, title = "", episodeNumber = 1, episodeTitle = "") {
       loginScreen.classList.toggle("hidden", screen !== "login");
       planetScreen.classList.toggle("hidden", screen !== "anime");
       animeDetailScreen.classList.toggle("hidden", screen !== "detail");
@@ -553,7 +567,7 @@
         animeDetailTitle.textContent = title;
         renderEpisodeList(title);
       }
-      if (screen === "player") openEpisode(title, episodeNumber);
+      if (screen === "player") openEpisode(title, episodeNumber, episodeTitle);
     }
 
     function renderEpisodeList(title) {
@@ -562,30 +576,38 @@
         const button = document.createElement("button");
         button.className = "episode-button";
         button.type = "button";
-        button.textContent = `Episode ${episodeNumber}`;
+        const episodeTitle = title === "Solo Leveling"
+          ? soloLevelingEpisodeTitles[episodeNumber - 1]
+          : "";
+        button.textContent = episodeTitle
+          ? `Episode ${episodeNumber}: ${episodeTitle}`
+          : `Episode ${episodeNumber}`;
         button.addEventListener("click", () => {
           history.pushState(
             {
               moonlitAtelierScreen: "player",
               animeTitle: title,
               episodeNumber,
+              episodeTitle,
             },
             "",
             location.href
           );
-          showScreen("player", title, episodeNumber);
+          showScreen("player", title, episodeNumber, episodeTitle);
         });
         episodeList.append(button);
       }
     }
 
-    function openEpisode(title, episodeNumber) {
+    function openEpisode(title, episodeNumber, episodeTitle = "") {
       if (localVideoObjectUrl) {
         URL.revokeObjectURL(localVideoObjectUrl);
         localVideoObjectUrl = null;
       }
       episodeFileInput.value = "";
-      episodePlayerTitle.textContent = `${title} — Episode ${episodeNumber}`;
+      episodePlayerTitle.textContent = episodeTitle
+        ? `${title} — Episode ${episodeNumber}: ${episodeTitle}`
+        : `${title} — Episode ${episodeNumber}`;
       episodePlayerStatus.textContent = "Loading episode video…";
       const fileSlug = title.toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -629,7 +651,8 @@
           ? state.moonlitAtelierScreen
           : "login",
         state && state.animeTitle ? state.animeTitle : "",
-        state && state.episodeNumber ? state.episodeNumber : 1
+        state && state.episodeNumber ? state.episodeNumber : 1,
+        state && state.episodeTitle ? state.episodeTitle : ""
       );
     });
 
