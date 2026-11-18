@@ -1,8 +1,7 @@
 const CACHE_PREFIX = "moonlit-atelier-shell-";
-const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const APP_PAGE = "./index.html";
 const APP_SHELL = [
-  "./",
-  "./index.html",
   "./anime-girl-reference.png",
   "./manifest.webmanifest",
   "./anime-planet-icon.svg",
@@ -11,9 +10,16 @@ const APP_SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(APP_SHELL);
+    const response = await fetch(`${APP_PAGE}?cache-bust=v3`, { cache: "reload" });
+    if (!response.ok) {
+      throw new Error(`Could not cache the app page: ${response.status}`);
+    }
+    await cache.put(APP_PAGE, response.clone());
+    await cache.put("./", response);
+  })());
   self.skipWaiting();
 });
 
@@ -42,16 +48,16 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: "reload" })
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) =>
-            cache.put("./index.html", copy),
+            cache.put(APP_PAGE, copy),
           );
           return response;
         })
         .catch(async () => {
-          const cachedPage = await caches.match("./index.html");
+          const cachedPage = await caches.match(APP_PAGE);
           if (!cachedPage) {
             throw new Error("The app page is unavailable offline.");
           }
