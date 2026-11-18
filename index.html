@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./anime-planet-icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./anime-planet-icon.svg" />
+  <link rel="apple-touch-icon" href="./anime-planet-icon-192.png" />
   <meta name="description" content="Moonlit Atelier — browse anime series and find legal viewing availability." />
   <title>Moonlit Atelier</title>
   <style>
@@ -389,7 +389,7 @@
   <main class="page">
     <section class="form-panel" aria-labelledby="page-title">
       <button id="install-button" class="install-button" type="button">Install app</button>
-      <p id="install-help" class="install-help" aria-live="polite">Use your browser menu to install the app or add it to your home screen.</p>
+      <p id="install-help" class="install-help" aria-live="polite">Tap Install app for device-specific installation instructions.</p>
       <div id="login-screen">
         <div class="brand">✦ Moonlit Atelier</div>
         <h1 id="page-title">Welcome back</h1>
@@ -476,29 +476,56 @@
 
     installButton.addEventListener("click", async () => {
       if (!window.isSecureContext || !("serviceWorker" in navigator)) {
-        installHelp.textContent = "To install, host this page on an HTTPS website first; opening the HTML file directly does not support installation.";
+        installHelp.textContent = "Install is unavailable here. Open the website's HTTPS link in a supported browser such as Chrome, Edge, or Safari.";
         return;
       }
 
       if (deferredInstallPrompt) {
-        deferredInstallPrompt.prompt();
-        const choice = await deferredInstallPrompt.userChoice;
-        installHelp.textContent = choice.outcome === "accepted"
-          ? "Install started. Follow your browser's instructions."
-          : "Installation was canceled. You can try again from your browser menu.";
-        deferredInstallPrompt = null;
+        try {
+          deferredInstallPrompt.prompt();
+          const choice = await deferredInstallPrompt.userChoice;
+          installHelp.textContent = choice.outcome === "accepted"
+            ? "Install started. Follow your browser's instructions."
+            : "Installation was canceled. Tap Install app to try again.";
+          deferredInstallPrompt = null;
+        } catch (error) {
+          console.error("Could not open the app installation prompt.", error);
+          installHelp.textContent = "The install prompt could not open. Use the browser's app-install option instead.";
+        }
         return;
       }
 
-      installHelp.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
-        ? "On iPhone or iPad: tap Share, then choose Add to Home Screen."
-        : "Open your browser's menu and choose Install app or Add to Home screen. If that option is missing, install requires an HTTPS-hosted page.";
+      const userAgent = navigator.userAgent;
+      if (/iPhone|iPad|iPod/.test(userAgent)) {
+        installHelp.textContent = "In Safari, tap Share, then Add to Home Screen. If using another app's browser, first open this link in Safari.";
+      } else if (/VSCode|Electron|Code\//.test(userAgent)) {
+        installHelp.textContent = "This in-app preview cannot install websites. Open this HTTPS link in Chrome, Edge, or Safari, then use that browser's install option.";
+      } else if (/Android/.test(userAgent)) {
+        installHelp.textContent = "In Chrome, tap the three-dot menu, then Install app or Add to Home screen. If unavailable, open this link in Chrome.";
+      } else if (/Edg\//.test(userAgent)) {
+        installHelp.textContent = "In Microsoft Edge, open Settings and more, then Apps > Install this site as an app.";
+      } else if (/Chrome\//.test(userAgent)) {
+        installHelp.textContent = "In Chrome, open the menu and choose Save and share > Install page as app. If unavailable, check that this site is not already installed.";
+      } else if (/Safari\//.test(userAgent)) {
+        installHelp.textContent = "On macOS Safari, choose File > Add to Dock. On iPhone or iPad, tap Share > Add to Home Screen.";
+      } else {
+        installHelp.textContent = "This browser did not offer automatic installation. Open the HTTPS site in Chrome, Edge, or Safari and use its Install app or Add to Home Screen option.";
+      }
     });
 
     window.addEventListener("appinstalled", () => {
       installHelp.textContent = "App installed successfully.";
+      installButton.textContent = "App installed";
+      installButton.disabled = true;
       deferredInstallPrompt = null;
     });
+
+    if (window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true) {
+      installHelp.textContent = "Moonlit Atelier is installed on this device.";
+      installButton.textContent = "App installed";
+      installButton.disabled = true;
+    }
 
     if ("serviceWorker" in navigator && window.isSecureContext) {
       navigator.serviceWorker.register("./service-worker.js").catch((error) => {

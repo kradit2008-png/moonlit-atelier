@@ -1,10 +1,13 @@
-const CACHE_NAME = "anime-planet-shell-v1";
+const CACHE_PREFIX = "moonlit-atelier-shell-";
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const APP_SHELL = [
   "./",
   "./index.html",
   "./anime-girl-reference.png",
   "./manifest.webmanifest",
   "./anime-planet-icon.svg",
+  "./anime-planet-icon-192.png",
+  "./anime-planet-icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -19,7 +22,11 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) =>
       Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .filter((cacheName) =>
+            (cacheName.startsWith(CACHE_PREFIX) ||
+              cacheName === "anime-planet-shell-v1") &&
+            cacheName !== CACHE_NAME,
+          )
           .map((cacheName) => caches.delete(cacheName)),
       ),
     ),
