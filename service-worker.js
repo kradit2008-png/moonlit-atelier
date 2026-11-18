@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "moonlit-atelier-shell-";
-const CACHE_NAME = `${CACHE_PREFIX}v6`;
+const CACHE_NAME = `${CACHE_PREFIX}v7`;
 const APP_PAGE = "./index.html";
 const APP_SHELL = [
   "./anime-girl-reference.png",
@@ -13,7 +13,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
     await cache.addAll(APP_SHELL);
-    const response = await fetch(`${APP_PAGE}?cache-bust=v6`, { cache: "reload" });
+    const response = await fetch(`${APP_PAGE}?cache-bust=v7`, { cache: "reload" });
     if (!response.ok) {
       throw new Error(`Could not cache the app page: ${response.status}`);
     }

@@ -232,7 +232,7 @@
     }
 
     .episode-player {
-      display: block;
+      display: none;
       width: 100%;
       max-height: 70vh;
       margin: 18px 0;
@@ -240,16 +240,57 @@
       background: #05050a;
     }
 
+    .episode-player.is-ready {
+      display: block;
+    }
+
+    .episode-empty-state {
+      display: grid;
+      gap: 12px;
+      margin: 18px 0;
+      padding: 20px;
+      border: 1px solid rgba(214, 141, 233, 0.3);
+      border-radius: 16px;
+      background: rgba(19, 18, 37, 0.76);
+      text-align: center;
+    }
+
+    .episode-empty-state p {
+      margin: 0;
+      color: #e4dff0;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
     .episode-file {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    .episode-file:focus-visible + .episode-file-label {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+    }
+
+    .episode-file-label {
       display: block;
       width: 100%;
-      margin: 12px 0 18px;
-      padding: 12px;
+      min-height: 48px;
+      margin: 0;
+      padding: 13px 16px;
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.06);
-      color: #f7f3ff;
-      font: inherit;
+      background: linear-gradient(100deg, #d68de9, #9e9cf4);
+      color: #21172e;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 750;
+      text-align: center;
     }
 
     .anime-list {
@@ -517,9 +558,13 @@
         <h1 id="episode-player-title"></h1>
         <p id="episode-player-status" class="anime-detail-note" role="status">Loading episode video…</p>
         <video id="episode-player" class="episode-player" controls playsinline preload="metadata"></video>
-        <label for="episode-file" class="anime-detail-note">Or choose a video file from this device:</label>
+        <div id="episode-empty-state" class="episode-empty-state">
+          <p id="episode-empty-message">This episode video has not been added to the site yet.</p>
+          <p>Choose a video you own or have permission to watch. It will play on this device only.</p>
+          <label for="episode-file" class="episode-file-label">Choose a video from this device</label>
+        </div>
         <input id="episode-file" class="episode-file" type="file" accept="video/*" />
-        <p class="anime-detail-note">Device-selected files play only in this browser and are not uploaded or shared. To make an episode available to everyone, add a video you have rights to distribute in the site's <code>videos</code> folder.</p>
+        <p class="anime-detail-note">Your selected file is not uploaded or shared. For a video to play for everyone, the site owner must add a video they have rights to distribute.</p>
         <button id="back-to-episodes" type="button">Back to episodes</button>
       </div>
     </section>
@@ -536,6 +581,8 @@
     const episodePlayer = document.getElementById("episode-player");
     const episodePlayerTitle = document.getElementById("episode-player-title");
     const episodePlayerStatus = document.getElementById("episode-player-status");
+    const episodeEmptyState = document.getElementById("episode-empty-state");
+    const episodeEmptyMessage = document.getElementById("episode-empty-message");
     const episodeFileInput = document.getElementById("episode-file");
     const episodeList = document.getElementById("episode-list");
     const demoForm = document.getElementById("demo-form");
@@ -609,6 +656,9 @@
         ? `${title} — Episode ${episodeNumber}: ${episodeTitle}`
         : `${title} — Episode ${episodeNumber}`;
       episodePlayerStatus.textContent = "Loading episode video…";
+      episodePlayer.classList.remove("is-ready");
+      episodeEmptyState.classList.remove("hidden");
+      episodeEmptyMessage.textContent = "Checking whether this episode's video is available on the site…";
       const fileSlug = title.toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
@@ -617,12 +667,17 @@
     }
 
     episodePlayer.addEventListener("loadedmetadata", () => {
+      episodePlayer.classList.add("is-ready");
+      episodeEmptyState.classList.add("hidden");
       episodePlayerStatus.textContent = "Video ready. Press Play to watch and listen.";
     });
 
     episodePlayer.addEventListener("error", () => {
       if (localVideoObjectUrl) return;
-      episodePlayerStatus.textContent = "This episode's video has not been added yet. Add the matching MP4 to the site's videos folder or choose a file from this device below.";
+      episodePlayer.classList.remove("is-ready");
+      episodeEmptyState.classList.remove("hidden");
+      episodeEmptyMessage.textContent = "No video is available for this episode yet.";
+      episodePlayerStatus.textContent = "Choose a video from your device to watch here, or ask the site owner to add a licensed video.";
     });
 
     episodeFileInput.addEventListener("change", () => {
@@ -630,6 +685,8 @@
       if (!file) return;
       if (localVideoObjectUrl) URL.revokeObjectURL(localVideoObjectUrl);
       localVideoObjectUrl = URL.createObjectURL(file);
+      episodeEmptyState.classList.add("hidden");
+      episodePlayer.classList.add("is-ready");
       episodePlayerStatus.textContent = `Ready to play ${file.name}. This file stays on this device.`;
       episodePlayer.src = localVideoObjectUrl;
       episodePlayer.load();
